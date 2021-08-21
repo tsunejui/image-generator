@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -129,6 +130,13 @@ type GeneratorErrors struct {
 	MergeErrors []MergeError
 }
 
+type MergeResult struct {
+	Files []string `json:"files"`
+	Path  string   `json:"path"`
+}
+
+const resultFile = "result.json"
+
 func mergeImages(images []MergeImages) error {
 
 	// combinations from multiple arrays
@@ -148,7 +156,7 @@ func mergeImages(images []MergeImages) error {
 	}
 
 	// merge images
-	var success int
+	var mergeResults []MergeResult
 	var generatorErr GeneratorErrors
 	for k, com := range combinations {
 		var generator pkg.ImageGenerator
@@ -175,7 +183,15 @@ func mergeImages(images []MergeImages) error {
 		if isContinue {
 			continue
 		}
-		success++
+
+		var baseFilesName []string
+		for _, f := range generator.GetFiles() {
+			baseFilesName = append(baseFilesName, filepath.Base(f))
+		}
+		mergeResults = append(mergeResults, MergeResult{
+			Files: baseFilesName,
+			Path:  fileName,
+		})
 	}
 
 	// error handling
@@ -193,6 +209,16 @@ func mergeImages(images []MergeImages) error {
 		}
 	}
 
-	fmt.Printf("\nit's done, sucess count: %d\n", success)
+	fmt.Printf("\nit's done, sucess count: %d\n", len(mergeResults))
+
+	// export result json
+	data, err := json.Marshal(mergeResults)
+	if err != nil {
+		return fmt.Errorf("failed to marshal data: %v", err)
+	}
+	if err := pkg.ExportFile(filepath.Join(output, resultFile), string(data)); err != nil {
+		return fmt.Errorf("failed to export data: %v", err)
+	}
+
 	return nil
 }

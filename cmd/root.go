@@ -9,6 +9,9 @@ var (
 		Use:   "generator",
 		Short: "A CLI tool for merging images",
 		Long:  `This tool provides an easy and extensible way to merge images.`,
+		CompletionOptions: cobra.CompletionOptions{
+			DisableDefaultCmd: true,
+		},
 	}
 )
 
