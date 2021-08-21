@@ -1,0 +1,143 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Compile for Darwin",
+            "type": "shell",
+            "group": "none",
+            "command": "go",
+            "args": [
+                "build",
+                "-o",
+                "./build/darwin/generator"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "GOOS": "darwin",
+                    "GOARCH": "amd64"
+                }
+            },
+            "presentation": {
+                "clear": true,
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": "$go"
+        },
+        {
+            "label": "Compile for Windows",
+            "type": "shell",
+            "group": "none",
+            "command": "go",
+            "args": [
+                "build",
+                "-o",
+                "./build/windows/generator.exe"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "GOOS": "windows",
+                    "GOARCH": "amd64"
+                }
+            },
+            "presentation": {
+                "clear": true,
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": "$go"
+        },
+        {
+            "label": "Compile for Linux",
+            "type": "shell",
+            "group": "none",
+            "command": "go",
+            "args": [
+                "build",
+                "-o",
+                "./build/linux/generator"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "GOOS": "linux",
+                    "GOARCH": "amd64"
+                }
+            },
+            "presentation": {
+                "clear": true,
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": "$go"
+        },
+        {
+            "label": "Zip Darwin",
+            "type": "shell",
+            "command": "zip",
+            "group": "none",
+            "args": [
+                "./build/generator-darwin-amd64.zip",
+                "./build/darwin/generator"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [],
+            "dependsOn": [
+                "Compile for Darwin"
+            ]
+        },
+        {
+            "label": "Zip Windows",
+            "type": "shell",
+            "command": "zip",
+            "group": "none",
+            "args": [
+                "./build/generator-windows-amd64.zip",
+                "./build/windows/generator.exe"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [],
+            "dependsOn": [
+                "Compile for Windows"
+            ]
+        },
+        {
+            "label": "Zip Linux",
+            "type": "shell",
+            "command": "zip",
+            "group": "none",
+            "args": [
+                "./build/generator-linux-amd64.zip",
+                "./build/linux/generator"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [],
+            "dependsOn": [
+                "Compile for Linux"
+            ]
+        },
+        {
+            "label": "Build",
+            "problemMatcher": [],
+            "dependsOn": [
+                "Zip Darwin",
+                "Zip Windows",
+                "Zip Linux"
+            ]
+        }
+    ]
+}
