@@ -9,8 +9,19 @@ import (
 )
 
 type ImageGenerator struct {
-	path  string
-	files []*os.File
+	directory string
+	path      string
+	files     []Image
+}
+
+type Image struct {
+	Directory string
+	Data      *os.File
+}
+
+func (i *ImageGenerator) SetDirectory(directory string) *ImageGenerator {
+	i.directory = directory
+	return i
 }
 
 func (i *ImageGenerator) SetPath(path string) *ImageGenerator {
@@ -18,19 +29,26 @@ func (i *ImageGenerator) SetPath(path string) *ImageGenerator {
 	return i
 }
 
-func (i *ImageGenerator) AddFile(path string) error {
+func (i *ImageGenerator) AddFile(directory string, path string) error {
 	f, err := os.Open(path)
 	if err != nil {
 		return fmt.Errorf("failed to open file (%s): %v", path, err)
 	}
-	i.files = append(i.files, f)
+	i.files = append(i.files, Image{
+		Directory: directory,
+		Data:      f,
+	})
 	return nil
 }
 
-func (i *ImageGenerator) GetFiles() []string {
+func (i *ImageGenerator) GetFiles() []Image {
+	return i.files
+}
+
+func (i *ImageGenerator) GetFilesName() []string {
 	var files []string
 	for _, f := range i.files {
-		files = append(files, f.Name())
+		files = append(files, f.Data.Name())
 	}
 	return files
 }
@@ -48,7 +66,7 @@ func (i *ImageGenerator) Merge() error {
 	var rectangle image.Rectangle
 	var outputImage *image.RGBA
 	for k, f := range i.files {
-		img, err := png.Decode(f)
+		img, err := png.Decode(f.Data)
 		if err != nil {
 			return fmt.Errorf("failed to decode file: %v", err)
 		}
@@ -74,7 +92,7 @@ func (i *ImageGenerator) Merge() error {
 
 func (i *ImageGenerator) close() error {
 	for _, f := range i.files {
-		if err := f.Close(); err != nil {
+		if err := f.Data.Close(); err != nil {
 			fmt.Printf("failed to close file: %v", err)
 		}
 	}

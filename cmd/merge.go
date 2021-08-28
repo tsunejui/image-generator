@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
+	"sync"
 
 	"generator/pkg"
 
@@ -21,12 +23,14 @@ var (
 	supportExtensions = []string{
 		".png",
 	}
-	folders = []string{}
-	output  string
+	folders       = []string{}
+	rootDirectory string
+	output        string
 )
 
 func init() {
-	MergeCommand.Flags().StringSliceVarP(&folders, "folder", "f", []string{}, "specify a folder")
+	MergeCommand.Flags().StringSliceVarP(&folders, "directory", "d", []string{}, "specify a directory")
+	MergeCommand.Flags().StringVarP(&rootDirectory, "root", "D", "", "specify the root directory")
 	MergeCommand.Flags().StringVarP(&output, "out", "o", "", "export the images")
 }
 
@@ -50,8 +54,20 @@ func runMergeCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to find the output directory: %s", output)
 	}
 
+	// Adjust the directories
+	var directories []string
+	if rootDirectory != "" {
+		for _, f := range folders {
+			if rootDirectory != "" {
+				directories = append(directories, filepath.Join(rootDirectory, f))
+			} else {
+				directories = append(directories, f)
+			}
+		}
+	}
+
 	// check directories
-	for _, f := range folders {
+	for _, f := range directories {
 		isFolder, err := pkg.IsDirectory(f)
 		if err != nil {
 			return fmt.Errorf("failed to check the directory: %v", err)
@@ -64,7 +80,7 @@ func runMergeCommand(cmd *cobra.Command, args []string) error {
 	var images []MergeImages
 
 	// check files
-	for _, f := range folders {
+	for _, f := range directories {
 		img := MergeImages{}
 		files, err := ioutil.ReadDir(f)
 		if err != nil {
@@ -96,7 +112,6 @@ func runMergeCommand(cmd *cobra.Command, args []string) error {
 	if len(images) == 0 {
 		return fmt.Errorf("failed to find images")
 	}
-
 	var number int = 1
 	fmt.Printf("\nThe analytical result:\n\n")
 	for _, m := range images {
@@ -106,7 +121,8 @@ func runMergeCommand(cmd *cobra.Command, args []string) error {
 	}
 	fmt.Printf("\nNumber of combinations: %d", number)
 
-	fmt.Printf("\n\nDo you want to continue? (Y/N):")
+	// Ask question to user
+	fmt.Printf("\n\nDo you want to continue? (Y/N): ")
 	var isContinue string
 	fmt.Scanf("%s", &isContinue)
 	if !pkg.CheckYes(isContinue) {
@@ -123,16 +139,27 @@ func runMergeCommand(cmd *cobra.Command, args []string) error {
 type MergeError struct {
 	Files []string
 	Err   error
+	Type  string
 }
 
-type GeneratorErrors struct {
-	AddErrors   []error
-	MergeErrors []MergeError
+const typeGeneratorErr = "generatorErr"
+const typeOtherErr = "otherErr"
+const typeAddingErr = "addingErr"
+
+type MergeAttribute struct {
+	TraitType string `json:"trait_type"`
+	Value     string `json:"value"`
 }
 
 type MergeResult struct {
-	Files []string `json:"files"`
-	Path  string   `json:"path"`
+	ID         int              `json:"id"`
+	Attributes []MergeAttribute `json:"attributes"`
+	Path       string           `json:"path"`
+}
+
+type MergeFile struct {
+	Directory string
+	Path      string
 }
 
 const resultFile = "result.json"
@@ -140,15 +167,18 @@ const resultFile = "result.json"
 func mergeImages(images []MergeImages) error {
 
 	// combinations from multiple arrays
-	emptyCom := []string{}
-	combinations := [][]string{emptyCom}
+	emptyCom := []MergeFile{}
+	combinations := [][]MergeFile{emptyCom}
 	for i := 0; i < len(images); i++ {
-		var tmp [][]string
+		var tmp [][]MergeFile
 		for _, v1 := range combinations {
 			for _, v2 := range images[i].Files {
-				newGroup := []string{}
+				newGroup := []MergeFile{}
 				newGroup = append(newGroup, v1...)
-				newGroup = append(newGroup, v2)
+				newGroup = append(newGroup, MergeFile{
+					Directory: images[i].FolderName,
+					Path:      v2,
+				})
 				tmp = append(tmp, newGroup)
 			}
 		}
@@ -156,60 +186,77 @@ func mergeImages(images []MergeImages) error {
 	}
 
 	// merge images
-	var mergeResults []MergeResult
-	var generatorErr GeneratorErrors
+	var mergeResults []*MergeResult
+	var generatorErrors []*MergeError
+	chanErrors := make(chan *MergeError, 1)
+	results := make(chan *MergeResult, 1)
+	var wg sync.WaitGroup
+	wg.Add(len(combinations))
 	for k, com := range combinations {
-		var generator pkg.ImageGenerator
-		var isContinue bool
-
-		fileName := filepath.Join(output, fmt.Sprintf("%d.png", k))
-		generator.SetPath(fileName)
-		for _, f := range com {
-			if err := generator.AddFile(f); err != nil {
-				generatorErr.AddErrors = append(generatorErr.AddErrors, fmt.Errorf("failed to add file into the generator: %v", err))
-				isContinue = true
-				break
+		go func(id int, com []MergeFile) {
+			defer wg.Done()
+			m, genErr := genImage(id, fmt.Sprintf("%d.png", id), com)
+			if genErr != nil {
+				chanErrors <- genErr
+			} else {
+				results <- m
 			}
-		}
-		if err := generator.Merge(); err != nil {
-			mergeErr := MergeError{
-				Files: generator.GetFiles(),
-				Err:   fmt.Errorf("failed to merge the images: %v", err),
-			}
-			generatorErr.MergeErrors = append(generatorErr.MergeErrors, mergeErr)
-			isContinue = true
-		}
-
-		if isContinue {
-			continue
-		}
-
-		var baseFilesName []string
-		for _, f := range generator.GetFiles() {
-			baseFilesName = append(baseFilesName, filepath.Base(f))
-		}
-		mergeResults = append(mergeResults, MergeResult{
-			Files: baseFilesName,
-			Path:  fileName,
-		})
+		}(k, com)
 	}
 
+	// add result
+	go func() {
+		defer close(results)
+		for m := range results {
+			mergeResults = append(mergeResults, m)
+		}
+	}()
+	// add error
+	go func() {
+		defer close(chanErrors)
+		for err := range chanErrors {
+			generatorErrors = append(generatorErrors, err)
+		}
+	}()
+	wg.Wait()
+
 	// error handling
+	var addErrors []*MergeError
+	var mergeErrors []*MergeError
+	for _, e := range generatorErrors {
+		switch e.Type {
+		case typeAddingErr:
+			addErrors = append(addErrors, e)
+		case typeGeneratorErr:
+			mergeErrors = append(mergeErrors, e)
+		}
+	}
+
 	fmt.Printf("\nShowing all errors below:\n")
 	fmt.Printf("\n=== adding errors ===\n")
-	for _, e := range generatorErr.AddErrors {
+	for _, e := range addErrors {
 		fmt.Println(e)
 	}
 	fmt.Printf("\n=== merging errors ===\n")
-	for _, e := range generatorErr.MergeErrors {
+	for _, e := range mergeErrors {
 		fmt.Printf("\nerror message: %v\n", e.Err)
 		fmt.Println("files:")
 		for _, f := range e.Files {
 			fmt.Println(f)
 		}
 	}
-
 	fmt.Printf("\nit's done, sucess count: %d\n", len(mergeResults))
+
+	// Bubble Sort
+	for i := 0; i < len(mergeResults)-1; i++ {
+		for j := 0; j < len(mergeResults)-i-1; j++ {
+			if mergeResults[j].ID > mergeResults[j+1].ID {
+				temp := mergeResults[j]
+				mergeResults[j] = mergeResults[j+1]
+				mergeResults[j+1] = temp
+			}
+		}
+	}
 
 	// export result json
 	data, err := json.Marshal(mergeResults)
@@ -221,4 +268,41 @@ func mergeImages(images []MergeImages) error {
 	}
 
 	return nil
+}
+
+func genImage(id int, imageName string, com []MergeFile) (*MergeResult, *MergeError) {
+	var generator pkg.ImageGenerator
+
+	fileName := filepath.Join(output, imageName)
+	generator.SetPath(fileName)
+	for _, f := range com {
+		if err := generator.AddFile(f.Directory, f.Path); err != nil {
+			return nil, &MergeError{
+				Type: typeAddingErr,
+				Err:  fmt.Errorf("failed to add file into the generator: %v", err),
+			}
+		}
+	}
+	if err := generator.Merge(); err != nil {
+		return nil, &MergeError{
+			Files: generator.GetFilesName(),
+			Type:  typeGeneratorErr,
+			Err:   fmt.Errorf("failed to add file into the generator: %v", err),
+		}
+	}
+
+	// generate the json file of result
+	var attributes []MergeAttribute
+	for _, f := range generator.GetFiles() {
+		fName := filepath.Base(f.Data.Name())
+		attributes = append(attributes, MergeAttribute{
+			TraitType: f.Directory,
+			Value:     strings.Replace(fName, fmt.Sprintf("%s", filepath.Ext(fName)), "", 1),
+		})
+	}
+	return &MergeResult{
+		ID:         id,
+		Attributes: attributes,
+		Path:       fileName,
+	}, nil
 }
