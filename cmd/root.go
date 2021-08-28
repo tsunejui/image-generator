@@ -15,10 +15,6 @@ var (
 	}
 )
 
-func init() {
-	rootCmd.AddCommand(MergeCommand)
-}
-
 func Execute() error {
 	return rootCmd.Execute()
 }

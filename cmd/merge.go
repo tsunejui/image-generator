@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	MergeCommand = &cobra.Command{
+	mergeCommand = &cobra.Command{
 		Use:   "merge",
 		Short: "Merge the images from the specified folders",
 		Long:  `Merge the images from the specified folders`,
@@ -29,9 +29,10 @@ var (
 )
 
 func init() {
-	MergeCommand.Flags().StringSliceVarP(&folders, "directory", "d", []string{}, "specify a directory")
-	MergeCommand.Flags().StringVarP(&rootDirectory, "root", "D", "", "specify the root directory")
-	MergeCommand.Flags().StringVarP(&output, "out", "o", "", "export the images")
+	rootCmd.AddCommand(mergeCommand)
+	mergeCommand.Flags().StringSliceVarP(&folders, "directory", "d", []string{}, "specify a directory")
+	mergeCommand.Flags().StringVarP(&rootDirectory, "root", "D", "", "specify the root directory")
+	mergeCommand.Flags().StringVarP(&output, "out", "o", "", "export the images")
 }
 
 type MergeImages struct {
