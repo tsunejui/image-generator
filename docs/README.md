@@ -21,37 +21,5 @@ Flags:
 
 let me try to explain how this tool work, please refer to the following diagram:
 
-```
-@startuml Basic Sample
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
-HIDE_STEREOTYPE()
-
-Boundary(c1, "Background Folder") {
-  Container(bg_images, "Images", "png files", "Specify the background images for merging\n\n example: blue, red, yellow, etc.")
-}
-
-Boundary(c2, "Body Folder") {
-  Container(body_images, "Images", "png files", "Specify the body images for merging\n\n example: different skin colors")
-}
-
-Boundary(c3, "Face Folder") {
-  Container(face_images, "Images", "png files", "Specify the face images for merging\n\n example: the different combina - eye and mouth")
-}
-
-Boundary(c4, "Output Folder") {
-  Container(com, "Image combinations", "png files")
-  Container(file, "result.json", "json file", "The results file provides information about the source of image combinations.")
-}
-
-
-System(command, "Merge Command")
-
-Rel(bg_images, command, "add")
-Rel(body_images, command, "add")
-Rel(face_images, command, "add")
-Rel(command, com, "export")
-Rel(command, file, "export")
-@enduml
-```
-
+![Merge Command Diagram](/png/bPDDJ-Cm48Rl_XMpFRLIcuY54oT4AG891ABT0n9IvSIJrE2Fo1yB4Th_lkC4-YKgn2dslA_7pqp6Ppvm5w9MS8kkHfXQhRaHS25vxRXclwGfLHG8gn0QVvhdZhzcjGohM4IFhhGce0bPQNNUA6vIfeaFGiaYdvvCxbFep-rDhhaFw2YqdD89BWswh24lOrVN5xFbV35xcDqj7kzdmn5ZvpOQmLqxB8_6C3ZdvKljKWWkhHBe1YDuPm3hHCEYNahDQ_JalkuM0rerfePAgdupRx2KLGjXXL1i4lR7eB8ED9KlJVradWpW6zUDmbCeLCGnE1HZQ54f-pe636Ks6B5_svY_4wOLxK50qdw6c99z1oTaLQ6ZxeD_aGPAgwpp-sZ7bFcIbtW8hIBjHsZfmBTeoRZ1e-4efE4m0MmHqdHf6yDg7_M4RhgBeOdX42mb-eJyJ1gaDNl0ezq2AKQoGnzLo9wzDScTlfqzRHP4s-k-Yq7Zx5yfg41fg4JTNGAy8EYkCc-ZeoROgk_33ih7RB1vImEl4t5wJdJ9plCY4tj0jJsv6oSNIU_axRdvoh3pzxuoh6Dzw_2jiIxiQnyjMejdQ0IzpVy0 "Merge Command Diagram")
