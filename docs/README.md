@@ -24,7 +24,7 @@ let me try to explain how this tool work, please refer to the following diagram:
 
 ![Merge Command Diagram](https://www.plantuml.com/plantuml/png/bPDDJ-Cm48Rl_XMpFRLIcuY54oT4AG891ABT0n9IvSIJrE2Fo1yB4Th_lkC4-YKgn2dslA_7pqp6Ppvm5w9MS8kkHfXQhRaHS25vxRXclwGfLHG8gn0QVvhdZhzcjGohM4IFhhGce0bPQNNUA6vIfeaFGiaYdvvCxbFep-rDhhaFw2YqdD89BWswh24lOrVN5xFbV35xcDqj7kzdmn5ZvpOQmLqxB8_6C3ZdvKljKWWkhHBe1YDuPm3hHCEYNahDQ_JalkuM0rerfePAgdupRx2KLGjXXL1i4lR7eB8ED9KlJVradWpW6zUDmbCeLCGnE1HZQ54f-pe636Ks6B5_svY_4wOLxK50qdw6c99z1oTaLQ6ZxeD_aGPAgwpp-sZ7bFcIbtW8hIBjHsZfmBTeoRZ1e-4efE4m0MmHqdHf6yDg7_M4RhgBeOdX42mb-eJyJ1gaDNl0ezq2AKQoGnzLo9wzDScTlfqzRHP4s-k-Yq7Zx5yfg41fg4JTNGAy8EYkCc-ZeoROgk_33ih7RB1vImEl4t5wJdJ9plCY4tj0jJsv6oSNIU_axRdvoh3pzxuoh6Dzw_2jiIxiQnyjMejdQ0IzpVy0 "Merge Command Diagram")
 
-You can download our [Example File](./docs/assets/example.zip) for testing, there are five directories in the zip file, try to run the merge command below:
+You can download our [Example File](./assets/example.zip) for testing, there are five directories in the zip file, try to run the merge command below:
 
 ```
 generator merge -D {YOUR_ROOT_DIRECTORY} -d background -d ears -d body -d eyes -d mouth -o {YOUR_OUTPUT_DIRECTORY}
