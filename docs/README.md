@@ -3,6 +3,7 @@
 We list a few examples of the `Image Generator`'s command here to illustrate its usefulness and ease of use.
 
 - [Merge Command](#merge-command)
+- [Result](#result)
 
 ## Merge Command
 
@@ -44,3 +45,66 @@ Direcoty|-d, --directory|string|false|specify the directory, you can reuse it.
 Output|-o, --out|string|false|specify a directory for outputting `result.json` and images.
 Help| -h, --help| |true|To see the usage document.
 
+Then you will get the analysis of the combinations like this:
+
+```
+The analytical result:
+
+background -> 3 
+ears -> 3
+body -> 3
+eyes -> 3
+mouth -> 3
+
+Number of combinations: 243
+
+Do you want to continue? (Y/N):
+```
+
+The merging program will run if you want to continue, and showing the errors:
+
+```
+Showing all errors below:
+
+=== adding errors ===
+
+=== merging errors ===
+
+it's done, sucess count: 243
+```
+
+## Result
+
+After the process of merging is done, you will get a json file for the result. As in the example below: 
+
+```
+[
+  {
+      "id": 241,
+      "attributes": [
+          {
+              "trait_type": "background",
+              "value": "bg-yellow"
+          },
+          {
+              "trait_type": "ears",
+              "value": "ear-tiger"
+          },
+          {
+              "trait_type": "body",
+              "value": "body-tiger"
+          },
+          {
+              "trait_type": "eyes",
+              "value": "eye-sleepy"
+          },
+          {
+              "trait_type": "mouth",
+              "value": "mouth-rat-19"
+          }
+      ],
+      "path": "/usr/local/241.png"
+  }
+  ...
+]
+```
