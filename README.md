@@ -36,6 +36,4 @@ Use "generator [command] --help" for more information about a command.
 
 * [Download](https://github.com/tsunejui/image-generator/releases) the tool for Windows, Mac and Linux. Please see [supported OS](./docs/support.md).
 
-* [Download](./docs/assets/example.zip) sample files if you need dummy files for testing.
-
 * To learn about the `Image Generator`, read the [documentation](./docs/README.md).
